@@ -32,7 +32,7 @@ impl Hasher for PoseidonHasher {
         let mut poseidon = Poseidon::<Fr>::new_circom(2).unwrap();
 
         let res = poseidon
-            .hash_bytes_be(&[left.as_ref(), right.as_ref()])
+            .hash_bytes_le(&[left.as_ref(), right.as_ref()])
             .unwrap();
 
         Node::from(res)
