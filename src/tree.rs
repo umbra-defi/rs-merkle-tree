@@ -67,9 +67,14 @@ where
     S: Store,
 {
     pub fn new(hasher: H, store: S) -> Self {
+        Self::new_with_base_zero(hasher, store, Node::ZERO)
+    }
+
+    pub fn new_with_base_zero(hasher: H, store: S, base_zero: Node) -> Self {
         // TODO: Protect from overflow. Eg if depth is 256, then it will overflow.
         // Set a limit, maybe no more than 64?
         let mut zero = [Node::ZERO; DEPTH];
+        zero[0] = base_zero;
         for i in 1..DEPTH {
             zero[i] = hasher.hash(&zero[i - 1], &zero[i - 1]);
         }
