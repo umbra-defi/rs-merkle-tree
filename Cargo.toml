@@ -19,11 +19,12 @@ path = "src/lib.rs"
 [features]
 all = ["all_stores"]
 default = ["memory_store"]
-all_stores = ["memory_store", "sled_store", "sqlite_store", "rocksdb_store"]
+all_stores = ["memory_store", "sled_store", "sqlite_store", "rocksdb_store", "postgres_store"]
 memory_store = []
 sled_store = ["dep:sled"]
 sqlite_store = ["rusqlite/bundled"]
 rocksdb_store = ["dep:rocksdb"]
+postgres_store = ["dep:postgres"]
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["async_tokio"] }
@@ -54,3 +55,4 @@ light-poseidon = "0.4"
 sled = { version = "0.34.7", optional = true }
 rusqlite = { version = "0.37", features = ["bundled"], optional = true }
 rocksdb = { version = "0.24", optional = true }
+postgres = { version = "0.19", optional = true }
