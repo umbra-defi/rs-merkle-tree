@@ -7,6 +7,8 @@ use temp_file::TempFile;
 
 #[cfg(feature = "memory_store")]
 use rs_merkle_tree::stores::MemoryStore;
+#[cfg(feature = "postgres_store")]
+use rs_merkle_tree::stores::PostgresStore;
 #[cfg(feature = "rocksdb_store")]
 use rs_merkle_tree::stores::RocksDbStore;
 #[cfg(feature = "sled_store")]
@@ -47,6 +49,10 @@ fn test_stores_single() {
     stores.push(Box::new(SqliteStore::new(path_sqlite)));
     #[cfg(feature = "rocksdb_store")]
     stores.push(Box::new(RocksDbStore::new(&path_rocksdb)));
+    #[cfg(feature = "postgres_store")]
+    if let Ok(url) = std::env::var("POSTGRES_URL") {
+        stores.push(Box::new(PostgresStore::new(&url)));
+    }
 
     for mut store in stores {
         store.put(&[(0, 0, Node::ZERO)]).unwrap();
@@ -119,6 +125,10 @@ fn test_stores_multiple() {
     stores.push(Box::new(SqliteStore::new(path_sqlite)));
     #[cfg(feature = "rocksdb_store")]
     stores.push(Box::new(RocksDbStore::new(&path_rocksdb)));
+    #[cfg(feature = "postgres_store")]
+    if let Ok(url) = std::env::var("POSTGRES_URL") {
+        stores.push(Box::new(PostgresStore::new(&url)));
+    }
 
     // Simulates a simple merkle tree with 8 leaves.
     //        (root)

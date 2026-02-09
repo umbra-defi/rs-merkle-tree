@@ -23,3 +23,15 @@ pub trait Store {
     /// Returns the number of leaves in the store.
     fn get_num_leaves(&self) -> u64;
 }
+
+/// Backends that support multiple trees in one resource (e.g. one DB).
+/// The returned type implements [Store] and is bound to the given tree index.
+pub trait MultiTreeStore {
+    type Store: Store;
+
+    /// Returns a store for the given tree index (loads existing state).
+    fn for_tree(connection: &str, tree_index: i64) -> Self::Store;
+
+    /// Returns a store for the given tree index with all data for that tree cleared.
+    fn for_tree_clean(connection: &str, tree_index: i64) -> Self::Store;
+}

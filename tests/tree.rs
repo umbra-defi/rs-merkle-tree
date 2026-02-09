@@ -7,6 +7,8 @@ use std::path::Path;
 
 #[cfg(feature = "memory_store")]
 use rs_merkle_tree::stores::MemoryStore;
+#[cfg(feature = "postgres_store")]
+use rs_merkle_tree::stores::PostgresStore;
 #[cfg(feature = "rocksdb_store")]
 use rs_merkle_tree::stores::RocksDbStore;
 #[cfg(feature = "sled_store")]
@@ -77,7 +79,8 @@ fn test_merkle_tree_keccak_32_memory() {
 #[cfg(any(
     feature = "sled_store",
     feature = "sqlite_store",
-    feature = "rocksdb_store"
+    feature = "rocksdb_store",
+    feature = "postgres_store"
 ))]
 #[test]
 #[ignore = "run it on demand, slow and takes some disk space"]
@@ -121,6 +124,19 @@ fn test_disk_space() {
     bench_store::<SqliteStore, _>("sqlite.db", || SqliteStore::new("sqlite.db"));
     #[cfg(feature = "rocksdb_store")]
     bench_store::<RocksDbStore, _>("rocksdb.db", || RocksDbStore::new("rocksdb.db"));
+    #[cfg(feature = "postgres_store")]
+    if let Ok(url) = std::env::var("POSTGRES_URL") {
+        let mut tree: MerkleTree<Keccak256Hasher, PostgresStore, 32> =
+            MerkleTree::new(Keccak256Hasher, PostgresStore::new_clean(&url));
+        for _ in 0..NUM_BATCHES {
+            let leaves: Vec<Node> = (0..BATCH_SIZE).map(|_| Node::random()).collect();
+            tree.add_leaves(&leaves).unwrap();
+        }
+        println!(
+            "store postgres (remote, size not measured) depth 32 num_leaves {} size: N/A",
+            NUM_BATCHES * BATCH_SIZE
+        );
+    }
 }
 
 fn print_size(name: &str, file: &str, num_leaves: u64) {

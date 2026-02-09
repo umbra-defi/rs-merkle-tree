@@ -65,6 +65,7 @@ pub mod stores {
     #[cfg(feature = "memory_store")]
     mod memory_store;
     pub mod store;
+    pub use store::MultiTreeStore;
     #[cfg(feature = "memory_store")]
     pub use memory_store::MemoryStore;
     #[cfg(feature = "sled_store")]
@@ -79,6 +80,10 @@ pub mod stores {
     mod rocksdb_store;
     #[cfg(feature = "rocksdb_store")]
     pub use rocksdb_store::RocksDbStore;
+    #[cfg(feature = "postgres_store")]
+    mod postgres_store;
+    #[cfg(feature = "postgres_store")]
+    pub use postgres_store::PostgresStore;
 }
 
 // Re-export the store module for easier access

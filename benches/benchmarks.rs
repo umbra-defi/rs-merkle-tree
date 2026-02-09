@@ -2,6 +2,8 @@ use criterion::black_box;
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use rand::random;
 use rs_merkle_tree::stores::{MemoryStore, RocksDbStore, SledStore, SqliteStore};
+#[cfg(feature = "postgres_store")]
+use rs_merkle_tree::stores::PostgresStore;
 use rs_merkle_tree::{hasher::Keccak256Hasher, node::Node, tree::MerkleTree};
 
 // Constants for the benchmarks
@@ -80,6 +82,26 @@ fn bench_insertions(c: &mut Criterion) {
             });
         },
     );
+
+    #[cfg(feature = "postgres_store")]
+    if let Ok(url) = std::env::var("POSTGRES_URL") {
+        let mut postgres_tree: MerkleTree<Keccak256Hasher, PostgresStore, 32> =
+            MerkleTree::new(Keccak256Hasher, PostgresStore::new_clean(&url));
+        group.throughput(Throughput::Elements((NUM_BATCHES * BATCH_SIZE) as u64));
+        group.bench_function(
+            BenchmarkId::new("postgres_store", "depth32_keccak256"),
+            |b| {
+                b.iter(|| {
+                    for _ in 0..NUM_BATCHES {
+                        let leaves: Vec<Node> = (0..BATCH_SIZE)
+                            .map(|_| black_box(Node::random()))
+                            .collect::<Vec<Node>>();
+                        postgres_tree.add_leaves(&leaves).unwrap();
+                    }
+                });
+            },
+        );
+    }
 
     // Depth 32 benchmarks Poseidon
     // TODO: Benchmarks not working due to inputs being bigger than the prime
@@ -188,6 +210,27 @@ fn bench_get_proof(c: &mut Criterion) {
             });
         },
     );
+
+    #[cfg(feature = "postgres_store")]
+    if let Ok(url) = std::env::var("POSTGRES_URL") {
+        let mut postgres_tree: MerkleTree<Keccak256Hasher, PostgresStore, 32> =
+            MerkleTree::new(Keccak256Hasher, PostgresStore::new_clean(&url));
+        for _ in 0..NUM_BATCHES {
+            let leaves: Vec<Node> = (0..BATCH_SIZE)
+                .map(|_| black_box(Node::random()))
+                .collect::<Vec<Node>>();
+            postgres_tree.add_leaves(&leaves).unwrap();
+        }
+        group.bench_function(
+            BenchmarkId::new("postgres_store", "depth32_keccak256"),
+            |b| {
+                b.iter(|| {
+                    let i = random::<u64>() % (BATCH_SIZE * NUM_BATCHES);
+                    postgres_tree.proof(i).unwrap();
+                });
+            },
+        );
+    }
 
     // Cleanup
     let _ = std::fs::remove_file("sqlite.db");
